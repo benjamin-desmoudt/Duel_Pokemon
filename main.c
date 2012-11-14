@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Vider le buffer
 
-void clean_buffer()
+
+void clear_buffer()
 {
     int c = 0;
     while (c != '\n' && c != EOF)
@@ -12,10 +12,6 @@ void clean_buffer()
         c = getchar();
     }
 }
-
-/*Cette fonction va permettre d'éviter les "buffer overflow"
-et ainsi empêcher la modification de données extérieures au programme*/
-
 
 int lire(char *chaine, int longueur)
 {
@@ -30,16 +26,17 @@ int lire(char *chaine, int longueur)
         }
         else
         {
-            viderBuffer();
+            clear_buffer();
         }
         return 1;
     }
     else
     {
-        viderBuffer();
+        clear_buffer();
         return 0;
     }
 }
+
 
 
 typedef struct attaque *Attaque;
@@ -71,7 +68,7 @@ struct pokemon
   char* nom;
   int hp_max;
   int hp;
-  Attaque t[4];
+  Attaque attaques[4];
 };
 
 
@@ -81,10 +78,10 @@ Pokemon new_pokemon (char* name, int pv_max, Attaque a1, Attaque a2, Attaque a3,
   pkmn->nom = name;
   pkmn->hp_max = pv_max;
   pkmn->hp = pv_max;
-  pkmn->t[0] = a1;
-  pkmn->t[1] = a2;
-  pkmn->t[2] = a3;
-  pkmn->t[3] = a4;
+  pkmn->attaques[0] = a1;
+  pkmn->attaques[1] = a2;
+  pkmn->attaques[2] = a3;
+  pkmn->attaques[3] = a4;
   return (pkmn);
 }
 
@@ -98,7 +95,7 @@ void get_pokemon (int i, Pokemon pkmn)
   else
     {
       printf ("%s    %d/%d\n", pkmn->nom , pkmn->hp, pkmn->hp_max);
-      printf ("1.%s\n2.%s\n3.%s\n4.%s\n", pkmn->t[0]->nom, pkmn->t[1]->nom, pkmn->t[2]->nom, pkmn->t[3]->nom);
+      printf ("1.%s\n2.%s\n3.%s\n4.%s\n", pkmn->attaques[0]->nom, pkmn->attaques[1]->nom, pkmn->attaques[2]->nom, pkmn->attaques[3]->nom);
     }
 }
 
@@ -120,28 +117,6 @@ void hit (Attaque atq, Pokemon x, Pokemon y)
     }
 }
 
-void good_ans (Pokemon x, Pokemon y, char* i)
-{
-    int atq = atoi(i) - 1;
-    hit (x->t[atq],x, y);
-}
-
-void wrong_ans (Pokemon x, Pokemon y)
-{
-    printf ("\n\n");
-    printf("Reponse incorrecte, veuillez recommencer");
-    char* vraie_atq;
-    fgets (vraie_atq, sizeof(vraie_atq), stdin)
-  if ( strcmp (vraie_atq, "1") || strcmp (vraie_atq, "2") || strcmp (vraie_atq, "3") || strcmp (vraie_atq, "4"))
-  {
-      good_ans(x, y, vraie_atq);
-  }
-  else
-  {
-      return (wrong_ans (x, y));
-  }
-}
-
 
 int combat (Pokemon x, Pokemon y, int i)
 {
@@ -149,22 +124,47 @@ int combat (Pokemon x, Pokemon y, int i)
   get_pokemon (0, y);
   printf("\n---------Votre Pokemon---------\n");
   get_pokemon (1, x);
-  char num_atq[3];
-  printf("\n Veuillez selectionner une attaque \n");
-  fgetc(stdin)
-  if ( )
+   printf("\n Veuillez selectionner une attaque \n");
+   int num_atq = getc(stdin);
+  switch (num_atq)
   {
-      good_ans(x, y, num_atq);
+      case 49 :
+      {
+       hit (x->attaques[0],x , y);
+      clear_buffer();
+      }
+
+      break;
+      case 50 :
+      {
+      hit (x->attaques[1],x , y);
+      clear_buffer();
+      }
+      break;
+      case 51 :
+      {
+      hit (x->attaques[2],x , y);
+      clear_buffer();
+      }
+      break;
+      case 52 :
+      {
+      hit (x->attaques[3],x , y);
+      clear_buffer();
+      }
+      break;
+      default :
+      printf ("Action incorrecte, l'attaque doit etre comprise entre 1 et 4.\n\n");
+      break;
+
   }
-  else
-  {
-      wrong_ans (x, y);
-  }
-    if (y->hp <= 0)
+
+  if (y->hp <= 0)
     {
       return (i % 2);
     }
   i++;
+
   return (combat(y, x, i));
 }
 
@@ -183,7 +183,6 @@ struct dresseur
   char *nom;
   Liste pokemons;
 };
-
 
 Liste cons (Pokemon pkmn, Liste l)
 {
@@ -246,14 +245,12 @@ Dresseur name_dresseur (char* name)
   return (d);
 }
 
-
 void combat_final ()
 {
-    //Entrée du nom du 1er dresseur
-  printf("Dresseur 1, veuilez entrer votre nom.\n");
-  char* name_1;
-  fgetc(name_1, sizeof (name_1), stdin);
-  lire ()
+  //Entrée du nom du 1er dresseur
+  printf("Dresseur 1, veuilez entrer votre nom. (20 caracteres max.)\n");
+  char name_1[20];
+  lire (name_1,20);
   Dresseur d1 = name_dresseur (name_1);
 
 
@@ -262,17 +259,19 @@ void combat_final ()
   add_pok (new_pokemon ("Raichu", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
   get_dresseur (d1);
 
+
   //Entrée du nom du deuxième dresseur
-  printf("Dresseur 2, veuillez entrer votre nom.\n");
-  char* name_2;
-  fgets(name_2, sizeof (name_2), stdin);
-  clean_buffer();
+  printf("Dresseur 2, veuillez entrer votre nom. (20 caracteres max)\n");
+  char name_2[20];
+  lire (name_2, 20);
   Dresseur d2 = name_dresseur (name_2);
 
   //Ajout des pokemons du dresseur 2
   add_pok (new_pokemon ("Ratata", 50, new_attack("Tonnerre", 25, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
   add_pok (new_pokemon ("Elektek", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
   get_dresseur (d2);
+
+
   int res;
   while ((d1->pokemons != NULL) || (d2->pokemons != NULL))
     {
