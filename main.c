@@ -2,43 +2,55 @@
 #include <stdlib.h>
 #include <string.h>
 
+//-----FONCTIONS GENERALES
 
+
+
+//Afin d'eviter un "buffer overflow",
+//j'implemante une fonction qui va vider le buffer clavier.
 
 void clear_buffer()
 {
-    int c = 0;
-    while (c != '\n' && c != EOF)
+  int c = 0;
+  while (c != '\n' && c != EOF)
     {
-        c = getchar();
+      c = getchar();
     }
 }
 
+
+//La fonction ci-dessous va se comporter comme la fonction fgets
+//puis va supprimer le \n en fin de chaine.
+//Si la chaine de caracteres en argument est trop longue ou nulle
+//la fonction vide le buffer
 int lire(char *chaine, int longueur)
 {
-    char *positionEntree = NULL;
+  char *positionEntree = NULL;
 
-    if (fgets(chaine, longueur, stdin) != NULL)
+  if (fgets(chaine, longueur, stdin) != NULL)
     {
-        positionEntree = strchr(chaine, '\n');
-        if (positionEntree != NULL)
+      positionEntree = strchr(chaine, '\n');
+      if (positionEntree != NULL)
         {
-            *positionEntree = '\0';
+          *positionEntree = '\0';
         }
-        else
+      else
         {
-            clear_buffer();
+          clear_buffer();
         }
-        return 1;
+      return 1;
     }
-    else
+  else
     {
-        clear_buffer();
-        return 0;
+      clear_buffer();
+      return 0;
     }
 }
 
 
 
+
+//-----Definition, affichage et creation d'un attaque-------
 typedef struct attaque *Attaque;
 struct attaque
 {
@@ -62,6 +74,10 @@ void get_attack (Attaque atq)
 }
 
 
+
+
+
+//-----Definition, affichage et cration d'un pokemon-----
 typedef struct pokemon *Pokemon;
 struct pokemon
 {
@@ -101,6 +117,9 @@ void get_pokemon (int i, Pokemon pkmn)
 
 
 
+
+
+//-----Implementation de la fonction hit
 void hit (Attaque atq, Pokemon x, Pokemon y)
 {
   float i = (float)(rand () % 100)/100;
@@ -109,13 +128,17 @@ void hit (Attaque atq, Pokemon x, Pokemon y)
       y->hp -= atq->force;
       printf("%s utilise %s\n", x->nom, atq->nom);
       printf("%s a subi %d points de degats\n\n\n", y->nom, atq->force);
+      clear_buffer();
     }
   else
     {
       printf("%s utilise %s\n", x->nom, atq->nom);
       printf("mais %s esquive\n\n\n", y->nom);
+      clear_buffer();
     }
 }
+
+
 
 
 int combat (Pokemon x, Pokemon y, int i)
@@ -124,40 +147,40 @@ int combat (Pokemon x, Pokemon y, int i)
   get_pokemon (0, y);
   printf("\n---------Votre Pokemon---------\n");
   get_pokemon (1, x);
-   printf("\n Veuillez selectionner une attaque \n");
-   int num_atq = getc(stdin);
+  printf("\n Veuillez selectionner une attaque \n");
+  int num_atq = getc(stdin);
   switch (num_atq)
-  {
-      case 49 :
-      {
-       hit (x->attaques[0],x , y);
+    {
+    case 49 :
+    {
+      hit (x->attaques[0],x , y);
       clear_buffer();
-      }
-
-      break;
-      case 50 :
-      {
+    }
+    break;
+    case 50 :
+    {
       hit (x->attaques[1],x , y);
       clear_buffer();
-      }
-      break;
-      case 51 :
-      {
+    }
+    break;
+    case 51 :
+    {
       hit (x->attaques[2],x , y);
       clear_buffer();
-      }
-      break;
-      case 52 :
-      {
+    }
+    break;
+    case 52 :
+    {
       hit (x->attaques[3],x , y);
       clear_buffer();
-      }
-      break;
-      default :
+    }
+    break;
+    default :
       printf ("Action incorrecte, l'attaque doit etre comprise entre 1 et 4.\n\n");
+      clear_buffer();
       break;
 
-  }
+    }
 
   if (y->hp <= 0)
     {
@@ -248,20 +271,21 @@ Dresseur name_dresseur (char* name)
 void combat_final ()
 {
   //Entrée du nom du 1er dresseur
-  printf("Dresseur 1, veuilez entrer votre nom. (20 caracteres max.)\n");
+  printf("Dresseur 1, quel est votre nom\n");
   char name_1[20];
   lire (name_1,20);
   Dresseur d1 = name_dresseur (name_1);
 
 
-  //Ajout des pokemonsdu dresseur 1
+
+  //Ajout des pokemons du dresseur 1
   add_pok (new_pokemon ("Pikachu", 50, new_attack("Tonnerre", 25, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
   add_pok (new_pokemon ("Raichu", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
   get_dresseur (d1);
 
 
   //Entrée du nom du deuxième dresseur
-  printf("Dresseur 2, veuillez entrer votre nom. (20 caracteres max)\n");
+  printf("\n\nDresseur 2, quel est votre nom?\n");
   char name_2[20];
   lire (name_2, 20);
   Dresseur d2 = name_dresseur (name_2);
@@ -300,6 +324,7 @@ void combat_final ()
 
 int main ()
 {
+
   combat_final ();
   return (0);
 }
