@@ -47,8 +47,12 @@ int lire(char *chaine, int longueur)
     }
 }
 
+void clear_screen ()
+{
+  printf ("\n===============================\n\n");
+}
 
-
+//Ne nettoie pas l'ecran mais permet une meilleure visibilite des etapes importantes.
 
 //-----Definition, affichage et creation d'un attaque-------
 typedef struct attaque *Attaque;
@@ -116,9 +120,6 @@ void get_pokemon (int i, Pokemon pkmn)
 }
 
 
-
-
-
 //-----Implementation de la fonction hit
 void hit (Attaque atq, Pokemon x, Pokemon y)
 {
@@ -126,60 +127,69 @@ void hit (Attaque atq, Pokemon x, Pokemon y)
   if (i <= atq->prob )
     {
       y->hp -= atq->force;
-      printf("%s utilise %s\n", x->nom, atq->nom);
-      printf("%s a subi %d points de degats\n\n\n", y->nom, atq->force);
+      printf("%s utilise %s <Appuyez sur ENTREE pour continuer>\n", x->nom, atq->nom);
       clear_buffer();
+      printf("%s a subi %d points de degats <Appuyez sur ENTREE pour continuer>\n", y->nom, atq->force);
     }
   else
     {
-      printf("%s utilise %s\n", x->nom, atq->nom);
-      printf("mais %s esquive\n\n\n", y->nom);
+      printf("%s utilise %s <Appuyez sur ENTREE pour continuer>\n", x->nom, atq->nom);
       clear_buffer();
+      printf("mais %s esquive <Appuyez sur ENTREE pour continuer>\n", y->nom);
     }
+    clear_buffer();
+    clear_screen ();
 }
 
 
 
+//-----Implementation de la fonction combat
 
-int combat (Pokemon x, Pokemon y, int i)
+int combat (Pokemon x, Pokemon y, int i) //L'entier i va permettre de compter le nombre total d'actions réalisées.
+//Si ce nombre est impair alors le vainqueur est le dresseur 1, sinon le dresseur 2 gagne cette manche.
 {
+  int val = 0; //val va etre la condition pour sortir de la boucle while.
+  //L'utilisateur ne pourra pas sortir tant qu'il n'aura pas fait une action correcte
   printf("---------Pokemon de l'adversaire---------\n");
   get_pokemon (0, y);
   printf("\n---------Votre Pokemon---------\n");
   get_pokemon (1, x);
-  printf("\n Veuillez selectionner une attaque \n");
-  int num_atq = getc(stdin);
-  switch (num_atq)
-    {
-    case 49 :
-    {
-      hit (x->attaques[0],x , y);
-      clear_buffer();
-    }
-    break;
-    case 50 :
-    {
-      hit (x->attaques[1],x , y);
-      clear_buffer();
-    }
-    break;
-    case 51 :
-    {
-      hit (x->attaques[2],x , y);
-      clear_buffer();
-    }
-    break;
-    case 52 :
-    {
-      hit (x->attaques[3],x , y);
-      clear_buffer();
-    }
-    break;
-    default :
-      printf ("Action incorrecte, l'attaque doit etre comprise entre 1 et 4.\n\n");
-      clear_buffer();
-      break;
 
+  while (val == 0)
+    {
+         printf("\n Dresseur %d, veuillez selectionner une attaque \n", (i % 2) + 1);
+      int num_atq = getc(stdin);//getc va renvoyer le code ASCII du premier caractere de la chaine rentree par l'utilisateur.
+      clear_buffer();//on nettoie le buffer au cas ou plus d'un caractere a ete utilise.
+      switch (num_atq)//on filtre sur le code ASCII
+        {
+        case 49 ://Si l'utilisateur a tape 1 comme premier caractere
+        {
+          hit (x->attaques[0],x , y);
+          val = 1;
+        }
+        break;
+        case 50 : //Si l'utilisateur a tape 2 comme premier caractere
+        {
+          hit (x->attaques[1],x , y);
+          val = 1;
+        }
+        break;
+        case 51 : //Si l'utilisateur a tape 3 comme premier caractere
+        {
+          hit (x->attaques[2],x , y);
+          val = 1;
+        }
+        break;
+        case 52 : //Si l'utilisateur a tape 4 comme premier caractere
+        {
+          hit (x->attaques[3],x , y);
+          val = 1;
+        }
+        break;
+        default : //Si l'utilisateur a tape autre chose comme premier caractere
+          printf ("Action incorrecte, l'attaque doit etre comprise entre 1 et 4.\n\n");
+          break;
+        }
     }
 
   if (y->hp <= 0)
@@ -187,18 +197,17 @@ int combat (Pokemon x, Pokemon y, int i)
       return (i % 2);
     }
   i++;
-
   return (combat(y, x, i));
 }
 
-
+//-----Creation d'un dersseur
 typedef struct pokemon_list *Liste;
 struct pokemon_list
 {
   Pokemon starter;
   Liste suivant;
 };
-
+//pokemon_list est une liste chainee de pokemons.
 
 typedef struct dresseur *Dresseur;
 struct dresseur
@@ -233,23 +242,22 @@ void get_pokemons(Liste l)
 {
   if (l==NULL)
     {
-      printf("[]\n");
+      printf("Personne!\n");
       return ;
     };
-  printf("[");
   while (l->suivant != NULL)
     {
-      printf("%s; ",l->starter->nom);
+      printf("%s, ",l->starter->nom);
       l=l->suivant;
     }
-  printf("%s]\n", l->starter->nom);
+  printf("et %s\n", l->starter->nom);
 }
 
 
 
 void get_dresseur (Dresseur d)
 {
-  printf ("%s\n",d->nom);
+  printf ("%s et son equipe constitue de :\n",d->nom);
   get_pokemons (d->pokemons);
 }
 
@@ -268,6 +276,49 @@ Dresseur name_dresseur (char* name)
   return (d);
 }
 
+
+void combat_final_aux (Dresseur d1, Dresseur d2)
+{
+  FILE* logs = NULL;
+  logs = fopen ("logs.txt","a+");
+  int res;
+  while ((d1->pokemons != NULL) || (d2->pokemons != NULL))
+    {
+      res = combat (d1->pokemons->starter, d2->pokemons->starter, 0);
+      if (res == 0)
+        {
+          fprintf (logs, "%s vs %s || %s vs %s || Vainqueur : %s\n", d1->nom, d2->nom, d1->pokemons->starter->nom, d2->pokemons->starter->nom, d1->pokemons->starter->nom);
+          if (d2->pokemons->suivant == NULL)
+            {
+                printf ("%s est K.O\n\n", d2->pokemons->starter->nom);
+                printf ("%s remporte le duel!\n", d1->nom);
+              fprintf(logs,"Fin du duel\nLe vainqueur est %s\n\n", d1->nom);
+              fclose(logs);
+              break;
+            }
+          printf ("%s est K.O\n\n", d2->pokemons->starter->nom);
+          d2->pokemons = d2->pokemons->suivant;
+        }
+      else
+        {
+          fprintf (logs, "%s vs % || %s vs %s || Vainqueur : %s\n", d1->nom, d2->nom, d1->pokemons->starter->nom, d2->pokemons->starter->nom, d2->pokemons->starter->nom);
+          if (d1->pokemons->suivant == NULL)
+            {
+              printf ("%s remporte le duel!\n", d2->nom);
+              fprintf(logs,"Fin du duel\nLe vainqueur est %s\n\n", d2->nom);
+              fclose(logs);
+              break;
+            }
+          printf("%s est K.O\n\n",d1->pokemons->starter->nom);
+
+          d1->pokemons = d1->pokemons->suivant;
+        };
+        clear_screen ();
+    }
+
+}
+
+
 void combat_final ()
 {
   //Entrée du nom du 1er dresseur
@@ -277,11 +328,14 @@ void combat_final ()
   Dresseur d1 = name_dresseur (name_1);
 
 
-
   //Ajout des pokemons du dresseur 1
-  add_pok (new_pokemon ("Pikachu", 50, new_attack("Tonnerre", 25, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
-  add_pok (new_pokemon ("Raichu", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
-  get_dresseur (d1);
+  add_pok (new_pokemon ("Roucarnage", 370, new_attack("Aeropique", 60, 1.0), new_attack("Vol", 90, 0.65), new_attack("Cru-Aile", 60, 1.0), new_attack("Lame d'Air", 75, 0.85)), d1);
+  add_pok (new_pokemon ("Salameche", 282, new_attack("Deflagration", 120, 0.45), new_attack("Lance-Flamme", 95, 0.65), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
+  add_pok (new_pokemon ("Bulbizarre", 294, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
+  add_pok (new_pokemon ("Ronflex", 524, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
+  add_pok (new_pokemon ("Krabboss", 314, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
+  add_pok (new_pokemon ("Pikachu", 274, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d1);
+
 
 
   //Entrée du nom du deuxième dresseur
@@ -291,35 +345,24 @@ void combat_final ()
   Dresseur d2 = name_dresseur (name_2);
 
   //Ajout des pokemons du dresseur 2
-  add_pok (new_pokemon ("Ratata", 50, new_attack("Tonnerre", 25, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
+  add_pok (new_pokemon ("Aquali", 50, new_attack("Tonnerre", 25, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
   add_pok (new_pokemon ("Elektek", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
-  get_dresseur (d2);
+  add_pok (new_pokemon ("Mackogneur", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
+  add_pok (new_pokemon ("Racaillou", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
+  add_pok (new_pokemon ("Smogo", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
+  add_pok (new_pokemon ("Leviator", 50, new_attack("Tonnerre", 50, 1.0), new_attack("Fatal Foudre", 50, 0.0), new_attack("Charge", 50, 0.6), new_attack("Tacle", 50, 0.6)), d2);
+
+  clear_screen ();
+  printf ("Bienvenue a la finale de ce tournoi Pokemon opposant :\n\n" );
+  get_dresseur(d1);
+  printf("\net\n\n");
+  get_dresseur(d2);
+  printf("\nQue le combat commence! <Appuyez sur ENTREE pour continuer>\n");
+  clear_buffer();
+  clear_screen ();
+  combat_final_aux (d1, d2);
 
 
-  int res;
-  while ((d1->pokemons != NULL) || (d2->pokemons != NULL))
-    {
-      res = combat (d1->pokemons->starter, d2->pokemons->starter, 0);
-      if (res == 0)
-        {
-          if (d2->pokemons->suivant == NULL)
-            {
-              printf ("%s remporte le duel!\n", name_1);
-              break;
-            }
-
-          d2->pokemons = d2->pokemons->suivant;
-        }
-      else
-        {
-          if (d1->pokemons->suivant == NULL)
-            {
-              printf ("%s remporte le duel!\n", name_2);
-              break;
-            }
-          d1->pokemons = d1->pokemons->suivant;
-        };
-    }
 }
 
 int main ()
